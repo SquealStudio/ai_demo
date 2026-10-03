@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>squeal_chat_</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo" id="logo"><span class="nm">squeal_chat<span class="us">_</span></span></div>
+    <select id="model" aria-label="Model" data-i18n-aria="m_model">
+      <option value="instruct" data-i18n="opt_instruct">Instruct (chat)</option>
+      <option value="base" data-i18n="opt_base">Base (text continuation)</option>
+    </select>
+    <button class="ib" id="clear" title="New chat" aria-label="New chat" data-i18n-title="new_chat" data-i18n-aria="new_chat"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button class="ib" id="snd" title="Sound" aria-label="Sound" data-i18n-title="sound" data-i18n-aria="sound"></button>
+    <button class="ib" id="cfg" title="Settings" aria-label="Settings" data-i18n-title="settings" data-i18n-aria="settings"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+  </header>
+  <div id="bar"><b></b></div>
+  <div id="st">The model will load on your first message.</div>
+
+  <div id="chat" aria-live="polite"></div>
+
+  <div class="composer">
+    <div class="box">
+      <textarea id="in" rows="1" placeholder="Type a message…" aria-label="Message" data-i18n-aria="m_msg"></textarea>
+      <button id="send" title="Send" aria-label="Send" data-i18n-aria="send"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+    </div>
+    <p class="hint" id="hint">Enter to send, Shift+Enter for a new line. The model is tiny: answers are often wrong.</p>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <div class="dh"><span data-i18n="dlg_title">Generation settings</span><button id="dx" aria-label="Close" data-i18n-aria="close">×</button></div>
+  <div class="db">
+    <div class="f"><label for="mx"><span data-i18n="l_mx">Max tokens</span> <output id="mxo"></output></label><input id="mx" type="range" min="16" max="900" step="2"></div>
+    <div class="f"><label for="tp"><span data-i18n="l_tp">Temperature</span> <output id="tpo"></output></label><input id="tp" type="range" min="0" max="1.5" step="0.05"></div>
+    <div class="f"><label for="tk"><span>top-k</span> <output id="tko"></output></label><input id="tk" type="range" min="1" max="200" step="1"></div>
+    <div class="f"><label for="rp"><span data-i18n="l_rp">Repetition penalty</span> <output id="rpo"></output></label><input id="rp" type="range" min="1" max="1.5" step="0.01"></div>
+    <div class="f"><label for="vol"><span data-i18n="l_vol">Volume</span> <output id="volo"></output></label><input id="vol" type="range" min="0" max="1" step="0.05"></div>
+    <div class="f"><label for="lang"><span data-i18n="l_lang">Language</span></label><select id="lang"><option value="en">English</option><option value="ru">Русский</option></select></div>
+    <label class="ck"><input type="checkbox" id="hist"><span><span data-i18n="l_hist">Use chat history</span><small data-i18n="l_hist_s">The model was trained on single questions, so this is off by default — answers are usually worse with history.</small></span></label>
+    <button class="btn" id="cclear" data-i18n="clear_cache">Clear cached models</button>
+    <div class="row2"><button class="btn" id="reset" data-i18n="reset">Reset</button><button class="btn" id="dok" data-i18n="done_btn">Done</button></div>
+  </div>
+</dialog>
+
+<script src="worker.js"></script>
+<script src="i18n.js"></script>
+<script src="markdown.js"></script>
+<script src="sfx.js"></script>
+<script src="avatar.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
