@@ -105,6 +105,15 @@ async function ensureModel(key) {
   $("logo").className = "logo ready";
 }
 
+const fixBytes = (() => {
+  const dec = new TextDecoder("utf-8");
+  const run = /(?:<0x[0-9A-Fa-f]{2}>)+/g;
+  return s => s.replace(run, m => {
+    const b = Uint8Array.from(m.match(/[0-9A-Fa-f]{2}/g), h => parseInt(h, 16));
+    return dec.decode(b);
+  }).replace(/\uFFFD+$/, "");
+})();
+
 const enc = (m, s) => Array.from(tok.encode(s, m.special ? undefined : { add_special_tokens: false }));
 const fmt = (q, a) => `Вопрос:\n${q}\n\nОтвет:\n${a}`;
 
@@ -179,8 +188,8 @@ function setBusy(v) {
   $("model").disabled = v; $("clear").disabled = v;
   $("send").classList.toggle("stop", v);
   $("send").innerHTML = v
-    ? '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>'
-    : '<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+  ? '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>'
+  : '<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
   $("send").title = tr(v ? "stop" : "send");
 }
 
@@ -199,32 +208,32 @@ async function respond(upto) {
       setStatus(tr("read_pre") + ids.length + tr("read_suf"));
       let t0 = performance.now(), raf = 0, cutDone = false;
       const sync = () => {
-        const text = tok.decode(gen, { skip_special_tokens: true }).replace(/<newline>/g, "\n");
+        const text = fixBytes(tok.decode(gen, { skip_special_tokens: true })).replace(/<newline>/g, "\n");
         const cut = m.chat ? text.search(/\n\s*Вопрос:/) : -1;
         if (cut >= 0) { bot.text = text.slice(0, cut).trimEnd(); if (!cutDone) { cutDone = true; worker.postMessage({ type: "stop", id }); } }
         else bot.text = m.chat ? text.trimStart() : text;
       };
-      const paint = () => {
-        raf = 0; sync();
-        const stick = nearBottom();
-        bot.node.innerHTML = renderMd(bot.text); placeCursor(bot.node);
-        if (stick) toBottom();
-        setStatus(tr("gen") + (gen.length / Math.max((performance.now() - t0) / 1000, 0.001)).toFixed(1) + tr("tps"));
-      };
-      await new Promise((resolve, reject) => {
-        onW = d => {
-          if (d.id !== undefined && d.id !== id) return;
-          if (d.type === "start") { t0 = performance.now(); sfx.typeStart(); }
-          else if (d.type === "token") { if (!cutDone) { gen.push(d.t); if (!raf) raf = setTimeout(paint, 70); } }
-          else if (d.type === "done") resolve(d);
-          else if (d.type === "error") reject(new Error(wErr(d.message)));
+        const paint = () => {
+          raf = 0; sync();
+          const stick = nearBottom();
+          bot.node.innerHTML = renderMd(bot.text); placeCursor(bot.node);
+          if (stick) toBottom();
+          setStatus(tr("gen") + (gen.length / Math.max((performance.now() - t0) / 1000, 0.001)).toFixed(1) + tr("tps"));
         };
-        worker.postMessage({ type: "generate", id, key, ids, maxNew: S.mx, temp: S.tp, topk: S.tk, rp: S.rp });
-      });
-      onW = null; if (raf) clearTimeout(raf); sync();
-      sfx.typeStop();
-      bot.n = gen.length; bot.tps = (gen.length / Math.max((performance.now() - t0) / 1000, 0.001)).toFixed(1);
-      if (!bot.text) bot.text = tr("empty");
+        await new Promise((resolve, reject) => {
+          onW = d => {
+            if (d.id !== undefined && d.id !== id) return;
+            if (d.type === "start") { t0 = performance.now(); sfx.typeStart(); }
+            else if (d.type === "token") { if (!cutDone) { gen.push(d.t); if (!raf) raf = setTimeout(paint, 70); } }
+            else if (d.type === "done") resolve(d);
+            else if (d.type === "error") reject(new Error(wErr(d.message)));
+          };
+            worker.postMessage({ type: "generate", id, key, ids, maxNew: S.mx, temp: S.tp, topk: S.tk, rp: S.rp });
+        });
+        onW = null; if (raf) clearTimeout(raf); sync();
+        sfx.typeStop();
+        bot.n = gen.length; bot.tps = (gen.length / Math.max((performance.now() - t0) / 1000, 0.001)).toFixed(1);
+        if (!bot.text) bot.text = tr("empty");
     }
     setStatus(tr(running ? "done" : "stopped"));
     if (running) sfx.done(); else sfx.stop();
